@@ -179,6 +179,7 @@ export type Database = {
           name: string
           notes: string | null
           tags: string[] | null
+          tenant_id: string | null
           thumbnail_url: string | null
           updated_at: string
           url: string
@@ -194,6 +195,7 @@ export type Database = {
           name: string
           notes?: string | null
           tags?: string[] | null
+          tenant_id?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           url: string
@@ -209,12 +211,21 @@ export type Database = {
           name?: string
           notes?: string | null
           tags?: string[] | null
+          tenant_id?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           url?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clips_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cta_clicks: {
         Row: {
@@ -366,6 +377,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          default_tenant_id: string | null
           email: string
           full_name: string
           id: string
@@ -377,6 +389,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_tenant_id?: string | null
           email: string
           full_name: string
           id?: string
@@ -388,6 +401,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_tenant_id?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -397,7 +411,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_default_tenant_id_fkey"
+            columns: ["default_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quick_replies: {
         Row: {
@@ -431,6 +453,88 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tenant_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["tenant_role"]
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["tenant_role"]
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["tenant_role"]
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_memberships_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          license_type: Database["public"]["Enums"]["license_type"]
+          logo_url: string | null
+          name: string
+          parent_tenant_id: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          license_type?: Database["public"]["Enums"]["license_type"]
+          logo_url?: string | null
+          name: string
+          parent_tenant_id?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          license_type?: Database["public"]["Enums"]["license_type"]
+          logo_url?: string | null
+          name?: string
+          parent_tenant_id?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_parent_tenant_id_fkey"
+            columns: ["parent_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -589,6 +693,7 @@ export type Database = {
           require_name: boolean
           start_hour: number
           start_minute: number
+          tenant_id: string | null
           timezone: string
           tracking_webhook_url: string
           typing_delay_max: number
@@ -652,6 +757,7 @@ export type Database = {
           require_name?: boolean
           start_hour?: number
           start_minute?: number
+          tenant_id?: string | null
           timezone?: string
           tracking_webhook_url?: string
           typing_delay_max?: number
@@ -715,6 +821,7 @@ export type Database = {
           require_name?: boolean
           start_hour?: number
           start_minute?: number
+          tenant_id?: string | null
           timezone?: string
           tracking_webhook_url?: string
           typing_delay_max?: number
@@ -729,7 +836,15 @@ export type Database = {
           welcome_message?: string
           youtube_video_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "webinars_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -764,10 +879,15 @@ export type Database = {
         Args: { from_date: string; to_date: string; webinar_filter?: string }
         Returns: number
       }
+      get_user_default_tenant_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       get_webinar_performance: {
         Args: { from_date?: string; to_date?: string }
         Returns: {
@@ -787,9 +907,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_tenant_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["tenant_role"]
+          _tenant_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_tenant_member: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "regular" | "trial"
+      license_type: "standard" | "white_label"
+      tenant_role: "owner" | "admin" | "member"
       user_status: "active" | "inactive"
     }
     CompositeTypes: {
@@ -919,6 +1053,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "regular", "trial"],
+      license_type: ["standard", "white_label"],
+      tenant_role: ["owner", "admin", "member"],
       user_status: ["active", "inactive"],
     },
   },
