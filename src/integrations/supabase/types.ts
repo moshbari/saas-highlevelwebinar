@@ -454,6 +454,56 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_api_keys: {
+        Row: {
+          anthropic_key_configured_at: string | null
+          anthropic_key_encrypted: string | null
+          created_at: string
+          id: string
+          openai_key_configured_at: string | null
+          openai_key_encrypted: string | null
+          preferred_ai_provider: string | null
+          tenant_id: string
+          updated_at: string
+          whisper_key_configured_at: string | null
+          whisper_key_encrypted: string | null
+        }
+        Insert: {
+          anthropic_key_configured_at?: string | null
+          anthropic_key_encrypted?: string | null
+          created_at?: string
+          id?: string
+          openai_key_configured_at?: string | null
+          openai_key_encrypted?: string | null
+          preferred_ai_provider?: string | null
+          tenant_id: string
+          updated_at?: string
+          whisper_key_configured_at?: string | null
+          whisper_key_encrypted?: string | null
+        }
+        Update: {
+          anthropic_key_configured_at?: string | null
+          anthropic_key_encrypted?: string | null
+          created_at?: string
+          id?: string
+          openai_key_configured_at?: string | null
+          openai_key_encrypted?: string | null
+          preferred_ai_provider?: string | null
+          tenant_id?: string
+          updated_at?: string
+          whisper_key_configured_at?: string | null
+          whisper_key_encrypted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_memberships: {
         Row: {
           created_at: string
