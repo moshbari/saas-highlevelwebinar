@@ -1,0 +1,20 @@
+-- Add registration form fields to webinars table
+ALTER TABLE public.webinars
+ADD COLUMN IF NOT EXISTS enable_registration_form boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS reg_form_headline text DEFAULT 'Register for the Free Training',
+ADD COLUMN IF NOT EXISTS reg_form_subheadline text DEFAULT 'Save your spot now!',
+ADD COLUMN IF NOT EXISTS reg_form_name_label text DEFAULT 'Your Name',
+ADD COLUMN IF NOT EXISTS reg_form_name_placeholder text DEFAULT 'Enter your name',
+ADD COLUMN IF NOT EXISTS reg_form_email_label text DEFAULT 'Your Email',
+ADD COLUMN IF NOT EXISTS reg_form_email_placeholder text DEFAULT 'Enter your email',
+ADD COLUMN IF NOT EXISTS reg_form_button_text text DEFAULT 'Reserve My Seat →',
+ADD COLUMN IF NOT EXISTS reg_form_button_color text DEFAULT '#e53935',
+ADD COLUMN IF NOT EXISTS reg_form_ghl_webhook_url text DEFAULT '',
+ADD COLUMN IF NOT EXISTS reg_form_thank_you_url text DEFAULT '',
+ADD COLUMN IF NOT EXISTS reg_form_show_datetime boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS reg_form_background text DEFAULT '#0a0a0f',
+ADD COLUMN IF NOT EXISTS reg_form_text_color text DEFAULT '#ffffff',
+ADD COLUMN IF NOT EXISTS reg_form_border_radius text DEFAULT 'rounded',
+ADD COLUMN IF NOT EXISTS reg_form_show_privacy boolean DEFAULT true,
+ADD COLUMN IF NOT EXISTS reg_form_privacy_text text DEFAULT 'We respect your privacy. Unsubscribe anytime.',
+ADD COLUMN IF NOT EXISTS reg_form_theme text DEFAULT 'dark';
