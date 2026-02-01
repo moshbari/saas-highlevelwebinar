@@ -607,6 +607,121 @@ export type Database = {
         }
         Relationships: []
       }
+      webinar_chatbot_config: {
+        Row: {
+          additional_context: string | null
+          bot_avatar: string | null
+          bot_name: string
+          created_at: string | null
+          encourage_engagement: boolean | null
+          engagement_prompts: Json | null
+          handle_price_questions: boolean | null
+          id: string
+          max_response_length: number | null
+          off_topic_message: string | null
+          price_redirect_message: string | null
+          redirect_off_topic: boolean | null
+          response_style: string | null
+          system_prompt: string | null
+          updated_at: string | null
+          webinar_description: string | null
+          webinar_id: string
+          webinar_transcript: string | null
+        }
+        Insert: {
+          additional_context?: string | null
+          bot_avatar?: string | null
+          bot_name?: string
+          created_at?: string | null
+          encourage_engagement?: boolean | null
+          engagement_prompts?: Json | null
+          handle_price_questions?: boolean | null
+          id?: string
+          max_response_length?: number | null
+          off_topic_message?: string | null
+          price_redirect_message?: string | null
+          redirect_off_topic?: boolean | null
+          response_style?: string | null
+          system_prompt?: string | null
+          updated_at?: string | null
+          webinar_description?: string | null
+          webinar_id: string
+          webinar_transcript?: string | null
+        }
+        Update: {
+          additional_context?: string | null
+          bot_avatar?: string | null
+          bot_name?: string
+          created_at?: string | null
+          encourage_engagement?: boolean | null
+          engagement_prompts?: Json | null
+          handle_price_questions?: boolean | null
+          id?: string
+          max_response_length?: number | null
+          off_topic_message?: string | null
+          price_redirect_message?: string | null
+          redirect_off_topic?: boolean | null
+          response_style?: string | null
+          system_prompt?: string | null
+          updated_at?: string | null
+          webinar_description?: string | null
+          webinar_id?: string
+          webinar_transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinar_chatbot_config_webinar_id_fkey"
+            columns: ["webinar_id"]
+            isOneToOne: true
+            referencedRelation: "webinars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webinar_chatbot_faqs: {
+        Row: {
+          answer: string
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          question: string
+          sort_order: number | null
+          updated_at: string | null
+          webinar_id: string
+        }
+        Insert: {
+          answer: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          sort_order?: number | null
+          updated_at?: string | null
+          webinar_id: string
+        }
+        Update: {
+          answer?: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          sort_order?: number | null
+          updated_at?: string | null
+          webinar_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinar_chatbot_faqs_webinar_id_fkey"
+            columns: ["webinar_id"]
+            isOneToOne: false
+            referencedRelation: "webinars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webinar_events: {
         Row: {
           chat_message: string | null
