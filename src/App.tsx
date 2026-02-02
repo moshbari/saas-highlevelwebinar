@@ -18,6 +18,7 @@ import Laboratory from "./pages/Laboratory";
 import Upgrade from "./pages/Upgrade";
 import UpdatePassword from "./pages/UpdatePassword";
 import AppSettings from "./pages/AppSettings";
+import ApiKeys from "./pages/ApiKeys";
 import Branding from "./pages/Branding";
 import AnalyticsHelp from "./pages/AnalyticsHelp";
 import WatchWebinar from "./pages/WatchWebinar";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/laboratory" element={<ProtectedRoute><Laboratory /></ProtectedRoute>} />
             <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
             <Route path="/update-password" element={<ProtectedRoute><UpdatePassword /></ProtectedRoute>} />
+            <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
             
             {/* Admin-only routes */}
             <Route path="/app-settings" element={<ProtectedRoute requireAdmin><AppSettings /></ProtectedRoute>} />
