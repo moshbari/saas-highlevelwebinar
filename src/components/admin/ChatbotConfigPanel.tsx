@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useChatbotConfig, ChatbotConfig, ChatbotFaq } from '@/hooks/useChatbotConfig';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useChatbotConfig, ChatbotConfig, ChatbotFaq, defaultChatbotConfig } from '@/hooks/useChatbotConfig';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,18 +18,31 @@ import {
   Save, 
   Loader2,
   Sparkles,
-  AlertCircle,
   MessageCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TestChatPanel } from './TestChatPanel';
 
+// Local FAQ type for new webinars (no ID yet)
+interface LocalFaq {
+  tempId: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+export interface ChatbotConfigRef {
+  getConfig: () => Partial<ChatbotConfig>;
+  getFaqs: () => Array<{ question: string; answer: string; category: string }>;
+}
+
 interface ChatbotConfigPanelProps {
   webinarId: string | undefined;
 }
 
-export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
+export const ChatbotConfigPanel = forwardRef<ChatbotConfigRef, ChatbotConfigPanelProps>(
+  ({ webinarId }, ref) => {
   const { 
     config, 
     faqs, 
@@ -42,42 +55,63 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
     hasConfig,
   } = useChatbotConfig(webinarId);
 
-  const [localConfig, setLocalConfig] = useState<Partial<ChatbotConfig>>({});
+  const [localConfig, setLocalConfig] = useState<Partial<ChatbotConfig>>(defaultChatbotConfig);
+  const [localFaqs, setLocalFaqs] = useState<LocalFaq[]>([]);
   const [newFaq, setNewFaq] = useState({ question: '', answer: '', category: 'general' });
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
 
+  // Expose methods to parent for saving new webinars
+  useImperativeHandle(ref, () => ({
+    getConfig: () => localConfig,
+    getFaqs: () => localFaqs.map(f => ({ question: f.question, answer: f.answer, category: f.category })),
+  }));
+
   useEffect(() => {
-    if (config) {
+    if (config && webinarId) {
       setLocalConfig(config);
     }
-  }, [config]);
+  }, [config, webinarId]);
 
   const updateLocalConfig = <K extends keyof ChatbotConfig>(key: K, value: ChatbotConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSaveConfig = () => {
-    saveConfig(localConfig);
+    if (webinarId) {
+      saveConfig(localConfig);
+    }
   };
 
-  const handleAddFaq = () => {
+  // For new webinars - add FAQ locally
+  const handleAddLocalFaq = () => {
     if (!newFaq.question.trim() || !newFaq.answer.trim()) return;
-    addFaq(newFaq);
+    setLocalFaqs(prev => [...prev, { 
+      tempId: `temp-${Date.now()}`, 
+      ...newFaq 
+    }]);
     setNewFaq({ question: '', answer: '', category: 'general' });
   };
 
-  if (!webinarId) {
-    return (
-      <Card className="glass-card">
-        <CardContent className="py-8 text-center">
-          <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">Save the webinar first to configure the AI chatbot</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // For existing webinars - add FAQ to DB
+  const handleAddFaq = () => {
+    if (!newFaq.question.trim() || !newFaq.answer.trim()) return;
+    if (webinarId) {
+      addFaq(newFaq);
+    } else {
+      handleAddLocalFaq();
+    }
+    setNewFaq({ question: '', answer: '', category: 'general' });
+  };
 
-  if (isLoading) {
+  const handleDeleteLocalFaq = (tempId: string) => {
+    setLocalFaqs(prev => prev.filter(f => f.tempId !== tempId));
+  };
+
+  // Determine which FAQs to show
+  const displayFaqs = webinarId ? faqs : localFaqs;
+  const isNewWebinar = !webinarId;
+
+  if (isLoading && webinarId) {
     return (
       <Card className="glass-card">
         <CardContent className="py-8 flex items-center justify-center">
@@ -95,13 +129,18 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
             <Sparkles className="w-5 h-5 text-primary" />
             AI Chatbot Configuration
           </CardTitle>
-          <Button onClick={handleSaveConfig} disabled={isSaving} size="sm">
-            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            Save Config
-          </Button>
+          {webinarId && (
+            <Button onClick={handleSaveConfig} disabled={isSaving} size="sm">
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Config
+            </Button>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">
           Configure how the AI chatbot responds to viewers during your webinar
+          {isNewWebinar && (
+            <span className="text-primary ml-1">(will be saved with the webinar)</span>
+          )}
         </p>
       </CardHeader>
       <CardContent>
@@ -281,7 +320,7 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
               </div>
             </div>
 
-            {faqs.length === 0 ? (
+            {displayFaqs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <MessageCircleQuestion className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No FAQs added yet</p>
@@ -289,53 +328,72 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
               </div>
             ) : (
               <Accordion type="single" collapsible className="space-y-2">
-                {faqs.map((faq, index) => (
-                  <AccordionItem key={faq.id} value={faq.id} className="border rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center gap-2 text-left">
-                        <Badge variant="outline" className="text-xs">{faq.category}</Badge>
-                        <span className="line-clamp-1">{faq.question}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      {editingFaqId === faq.id ? (
-                        <div className="space-y-3 py-2">
-                          <Input
-                            defaultValue={faq.question}
-                            onBlur={(e) => updateFaq({ id: faq.id, question: e.target.value })}
-                            className="input-field"
-                          />
-                          <Textarea
-                            defaultValue={faq.answer}
-                            onBlur={(e) => updateFaq({ id: faq.id, answer: e.target.value })}
-                            className="input-field min-h-[80px]"
-                          />
-                          <Button size="sm" variant="secondary" onClick={() => setEditingFaqId(null)}>
-                            Done
-                          </Button>
+                {displayFaqs.map((faq) => {
+                  const faqId = 'id' in faq ? faq.id : (faq as LocalFaq).tempId;
+                  return (
+                    <AccordionItem key={faqId} value={faqId} className="border rounded-lg px-4">
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-2 text-left">
+                          <Badge variant="outline" className="text-xs">{faq.category}</Badge>
+                          <span className="line-clamp-1">{faq.question}</span>
                         </div>
-                      ) : (
-                        <div className="py-2">
-                          <p className="text-sm text-muted-foreground mb-3">{faq.answer}</p>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" onClick={() => setEditingFaqId(faq.id)}>
-                              Edit
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => deleteFaq(faq.id)}
-                            >
-                              <Trash2 className="w-3 h-3 mr-1" />
-                              Delete
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        {editingFaqId === faqId ? (
+                          <div className="space-y-3 py-2">
+                            <Input
+                              defaultValue={faq.question}
+                              onBlur={(e) => {
+                                if (webinarId && 'id' in faq) {
+                                  updateFaq({ id: faq.id, question: e.target.value });
+                                }
+                              }}
+                              className="input-field"
+                            />
+                            <Textarea
+                              defaultValue={faq.answer}
+                              onBlur={(e) => {
+                                if (webinarId && 'id' in faq) {
+                                  updateFaq({ id: faq.id, answer: e.target.value });
+                                }
+                              }}
+                              className="input-field min-h-[80px]"
+                            />
+                            <Button size="sm" variant="secondary" onClick={() => setEditingFaqId(null)}>
+                              Done
                             </Button>
                           </div>
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
+                        ) : (
+                          <div className="py-2">
+                            <p className="text-sm text-muted-foreground mb-3">{faq.answer}</p>
+                            <div className="flex gap-2">
+                              {webinarId && (
+                                <Button size="sm" variant="ghost" onClick={() => setEditingFaqId(faqId)}>
+                                  Edit
+                                </Button>
+                              )}
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  if (webinarId && 'id' in faq) {
+                                    deleteFaq(faq.id);
+                                  } else {
+                                    handleDeleteLocalFaq((faq as LocalFaq).tempId);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
               </Accordion>
             )}
           </TabsContent>
@@ -412,32 +470,44 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
               )}
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-              <div>
-                <Label>Encourage Engagement</Label>
-                <p className="text-xs text-muted-foreground">
-                  AI proactively asks follow-up questions
-                </p>
+            <div className="space-y-4 p-4 rounded-lg border border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Encourage Engagement</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Add engagement prompts to responses
+                  </p>
+                </div>
+                <Switch
+                  checked={localConfig.encourage_engagement ?? true}
+                  onCheckedChange={(v) => updateLocalConfig('encourage_engagement', v)}
+                />
               </div>
-              <Switch
-                checked={localConfig.encourage_engagement ?? true}
-                onCheckedChange={(v) => updateLocalConfig('encourage_engagement', v)}
-              />
             </div>
           </TabsContent>
-            </Tabs>
+        </Tabs>
           </div>
 
-          {/* Right: Test Chat Panel */}
+          {/* Right: Test Chat (only for existing webinars with ID) */}
           <div>
-            <TestChatPanel 
-              webinarId={webinarId} 
-              botName={localConfig.bot_name}
-              botAvatar={localConfig.bot_avatar}
-            />
+            {webinarId ? (
+              <TestChatPanel webinarId={webinarId} botName={localConfig.bot_name} botAvatar={localConfig.bot_avatar} />
+            ) : (
+              <div className="h-full flex items-center justify-center p-8 rounded-lg border border-dashed border-border bg-secondary/20">
+                <div className="text-center">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground font-medium">Test Chat Available After Saving</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Save the webinar to test AI responses
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
-}
+});
+
+ChatbotConfigPanel.displayName = 'ChatbotConfigPanel';

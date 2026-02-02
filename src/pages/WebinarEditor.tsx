@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WebinarConfig } from '@/types/webinar';
 import { createDefaultWebinar } from '@/lib/webinarStorage';
@@ -11,6 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { generateEmbedCode } from '@/lib/generateEmbedCode';
 import { ROUTES } from '@/lib/routes';
+import { supabase } from '@/integrations/supabase/client';
+import { ChatbotConfigRef } from '@/components/admin/ChatbotConfigPanel';
 
 export default function WebinarEditor() {
   const navigate = useNavigate();
@@ -23,6 +25,9 @@ export default function WebinarEditor() {
   
   const [config, setConfig] = useState<Omit<WebinarConfig, 'id' | 'createdAt' | 'updatedAt'>>(createDefaultWebinar());
   const [showPreview, setShowPreview] = useState(true);
+  
+  // Ref to get chatbot config from the panel
+  const chatbotConfigRef = useRef<ChatbotConfigRef>(null);
 
   useEffect(() => {
     if (isEditing && existingWebinar) {
@@ -61,8 +66,48 @@ export default function WebinarEditor() {
           throw new Error('Failed to update');
         }
       } else {
+        // Creating new webinar - also save chatbot config
         const newWebinar = await saveWebinarMutation.mutateAsync(config);
         if (newWebinar) {
+          // Save chatbot config if any was configured
+          if (chatbotConfigRef.current) {
+            const chatbotConfig = chatbotConfigRef.current.getConfig();
+            const chatbotFaqs = chatbotConfigRef.current.getFaqs();
+            
+            // Save chatbot config
+            if (Object.keys(chatbotConfig).length > 0) {
+              const { error: configError } = await supabase
+                .from('webinar_chatbot_config')
+                .insert({
+                  webinar_id: newWebinar.id,
+                  ...chatbotConfig,
+                });
+              
+              if (configError) {
+                console.error('Error saving chatbot config:', configError);
+              }
+            }
+            
+            // Save FAQs
+            if (chatbotFaqs.length > 0) {
+              const faqsToInsert = chatbotFaqs.map((faq, index) => ({
+                webinar_id: newWebinar.id,
+                question: faq.question,
+                answer: faq.answer,
+                category: faq.category || 'general',
+                sort_order: index,
+              }));
+              
+              const { error: faqsError } = await supabase
+                .from('webinar_chatbot_faqs')
+                .insert(faqsToInsert);
+              
+              if (faqsError) {
+                console.error('Error saving chatbot FAQs:', faqsError);
+              }
+            }
+          }
+          
           // Generate and copy code to clipboard
           const code = generateEmbedCode(newWebinar);
           await navigator.clipboard.writeText(code);
@@ -143,7 +188,12 @@ export default function WebinarEditor() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <WebinarForm config={config} onChange={setConfig} webinarId={isEditing ? id : undefined} />
+            <WebinarForm 
+              config={config} 
+              onChange={setConfig} 
+              webinarId={isEditing ? id : undefined}
+              chatbotConfigRef={chatbotConfigRef}
+            />
           </motion.div>
           
           {showPreview && (

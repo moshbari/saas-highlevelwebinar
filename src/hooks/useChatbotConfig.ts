@@ -36,7 +36,7 @@ export interface ChatbotFaq {
   updated_at: string;
 }
 
-const defaultConfig: Omit<ChatbotConfig, 'id' | 'webinar_id' | 'created_at' | 'updated_at'> = {
+export const defaultChatbotConfig: Omit<ChatbotConfig, 'id' | 'webinar_id' | 'created_at' | 'updated_at'> = {
   bot_name: 'AI Assistant',
   bot_avatar: 'AI',
   system_prompt: '',
@@ -217,7 +217,7 @@ export function useChatbotConfig(webinarId: string | undefined) {
   });
 
   return {
-    config: config || defaultConfig as any,
+    config: config || defaultChatbotConfig as any,
     faqs: faqs || [],
     isLoading: configLoading || faqsLoading,
     saveConfig: saveConfigMutation.mutate,
