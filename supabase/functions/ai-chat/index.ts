@@ -159,43 +159,7 @@ async function callAnthropic(apiKey: string, systemPrompt: string, userMessage: 
   return data.content[0].text;
 }
 
-// Call Lovable AI Gateway (fallback)
-async function callLovableAI(systemPrompt: string, userMessage: string, conversationHistory: any[]): Promise<string> {
-  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-  if (!lovableApiKey) {
-    throw new Error('LOVABLE_API_KEY not configured');
-  }
-  
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...conversationHistory.slice(-10).map(msg => ({
-      role: msg.is_user ? 'user' : 'assistant',
-      content: msg.content
-    })),
-    { role: 'user', content: userMessage }
-  ];
-  
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${lovableApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages,
-      max_tokens: 500,
-    }),
-  });
-  
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Lovable AI error: ${error}`);
-  }
-  
-  const data = await response.json();
-  return data.choices[0].message.content;
-}
+// Note: Lovable AI fallback has been disabled - tenant must configure their own API keys
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -305,9 +269,10 @@ serve(async (req) => {
         provider = 'openai';
         console.log('Response generated via OpenAI');
       } else {
-        aiResponse = await callLovableAI(systemPrompt, user_message, history);
-        provider = 'lovable';
-        console.log('Response generated via Lovable AI');
+        // No API keys configured - return error message instead of fallback
+        console.log('No API keys configured for tenant');
+        aiResponse = webinar.error_message || "AI chat is not available. Please configure API keys in Settings > API Keys.";
+        provider = 'none';
       }
     } catch (aiError) {
       console.error('AI generation failed:', aiError);
