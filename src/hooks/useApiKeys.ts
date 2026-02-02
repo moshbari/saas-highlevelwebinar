@@ -98,7 +98,7 @@ export function useApiKeys() {
     },
   });
 
-  // Set preferred provider mutation
+  // Set preferred provider mutation with optimistic update
   const setProviderMutation = useMutation({
     mutationFn: async (provider: 'openai' | 'anthropic') => {
       if (!tenantId) throw new Error('No tenant ID available');
@@ -112,13 +112,30 @@ export function useApiKeys() {
       
       return data;
     },
+    // Optimistic update for instant feedback
+    onMutate: async (provider) => {
+      await queryClient.cancelQueries({ queryKey: ['api-keys-status', tenantId] });
+      const previousStatus = queryClient.getQueryData<ApiKeyStatus>(['api-keys-status', tenantId]);
+      
+      queryClient.setQueryData<ApiKeyStatus>(['api-keys-status', tenantId], (old) => 
+        old ? { ...old, preferred_provider: provider } : old
+      );
+      
+      return { previousStatus };
+    },
+    onError: (error: Error, _, context) => {
+      // Rollback on error
+      if (context?.previousStatus) {
+        queryClient.setQueryData(['api-keys-status', tenantId], context.previousStatus);
+      }
+      toast.error(error.message || 'Failed to set provider');
+    },
     onSuccess: (_, provider) => {
       const providerNames = { openai: 'OpenAI', anthropic: 'Anthropic' };
       toast.success(`${providerNames[provider]} set as preferred AI provider`);
-      queryClient.invalidateQueries({ queryKey: ['api-keys-status', tenantId] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to set provider');
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys-status', tenantId] });
     },
   });
 
