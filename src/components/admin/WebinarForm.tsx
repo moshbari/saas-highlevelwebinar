@@ -23,7 +23,7 @@ import {
 import { RegistrationFormSettings } from './RegistrationFormSettings';
 import { RegistrationFormPreview } from './RegistrationFormPreview';
 import { VideoSequenceBuilder } from './VideoSequenceBuilder';
-
+import { ChatbotConfigPanel } from './ChatbotConfigPanel';
 interface WebinarFormProps {
   config: Omit<WebinarConfig, 'id' | 'createdAt' | 'updatedAt'>;
   onChange: (config: Omit<WebinarConfig, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -805,6 +805,9 @@ export function WebinarForm({ config, onChange, webinarId }: WebinarFormProps) {
       {config.enableRegistrationForm && (
         <RegistrationFormPreview config={config} />
       )}
+
+      {/* AI Chatbot Configuration */}
+      <ChatbotConfigPanel webinarId={webinarId} />
     </div>
   );
 }
