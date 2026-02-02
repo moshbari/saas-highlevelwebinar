@@ -9,7 +9,7 @@ import { TrialWarningBar } from '@/components/auth/TrialWarningBar';
 import { WebinarNotesButton } from '@/components/webinar/notes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Radio, Loader2, MessageSquare, Edit, Eye, Code, Copy, Clipboard, Trash2, Clock, BarChart3, Headphones, LogOut, Settings, User, ExternalLink, PlayCircle, Link } from 'lucide-react';
+import { Plus, Radio, Loader2, MessageSquare, Edit, Eye, Code, Copy, Clipboard, Trash2, Clock, BarChart3, Headphones, LogOut, Settings, User, ExternalLink, PlayCircle, Link, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/hooks/use-toast';
 import { useState, useMemo } from 'react';
@@ -201,6 +201,10 @@ export default function Laboratory() {
             <Button onClick={() => navigate('/webinar/new')} size="sm" className="glow-button h-8 sm:h-9 px-2 sm:px-3">
               <Plus className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">New Webinar</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/api-keys')} className="h-8 sm:h-9 px-2 sm:px-3">
+              <Key className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">API Keys</span>
             </Button>
             {isAdmin && (
               <Button variant="outline" size="sm" onClick={() => navigate('/app-settings')} className="h-8 sm:h-9 px-2 sm:px-3">
