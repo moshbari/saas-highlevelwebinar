@@ -39,10 +39,17 @@ export interface ChatbotConfigRef {
 
 interface ChatbotConfigPanelProps {
   webinarId: string | undefined;
+  // Webinar-level settings passed from parent
+  typingDelayMin?: number;
+  typingDelayMax?: number;
+  errorMessage?: string;
+  onTypingDelayMinChange?: (value: number) => void;
+  onTypingDelayMaxChange?: (value: number) => void;
+  onErrorMessageChange?: (value: string) => void;
 }
 
 export const ChatbotConfigPanel = forwardRef<ChatbotConfigRef, ChatbotConfigPanelProps>(
-  ({ webinarId }, ref) => {
+  ({ webinarId, typingDelayMin, typingDelayMax, errorMessage, onTypingDelayMinChange, onTypingDelayMaxChange, onErrorMessageChange }, ref) => {
   const { 
     config, 
     faqs, 
@@ -400,6 +407,51 @@ export const ChatbotConfigPanel = forwardRef<ChatbotConfigRef, ChatbotConfigPane
 
           {/* Behavior Tab */}
           <TabsContent value="behavior" className="space-y-4">
+            {/* Typing Delay Settings */}
+            <div className="space-y-4 p-4 rounded-lg border border-border bg-secondary/20">
+              <h4 className="font-medium text-sm">Response Timing</h4>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="typingDelayMin">Typing Delay Min (seconds)</Label>
+                  <Input
+                    id="typingDelayMin"
+                    type="number"
+                    value={typingDelayMin || 2}
+                    onChange={(e) => onTypingDelayMinChange?.(parseInt(e.target.value) || 2)}
+                    className="input-field"
+                    min={1}
+                    max={10}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="typingDelayMax">Typing Delay Max (seconds)</Label>
+                  <Input
+                    id="typingDelayMax"
+                    type="number"
+                    value={typingDelayMax || 5}
+                    onChange={(e) => onTypingDelayMaxChange?.(parseInt(e.target.value) || 5)}
+                    className="input-field"
+                    min={1}
+                    max={30}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Simulates typing delay for more realistic chat experience</p>
+            </div>
+
+            {/* Error Message */}
+            <div className="space-y-2">
+              <Label htmlFor="errorMessage">Error / Fallback Message</Label>
+              <Textarea
+                id="errorMessage"
+                value={errorMessage || ''}
+                onChange={(e) => onErrorMessageChange?.(e.target.value)}
+                placeholder="Message shown when AI fails to respond or API keys are not configured"
+                className="input-field min-h-[80px]"
+              />
+              <p className="text-xs text-muted-foreground">Displayed when chatbot cannot generate a response</p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="max_response_length">Max Response Length</Label>
               <Input
