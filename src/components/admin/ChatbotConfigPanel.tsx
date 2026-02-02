@@ -19,9 +19,11 @@ import {
   Loader2,
   Sparkles,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { TestChatPanel } from './TestChatPanel';
 
 interface ChatbotConfigPanelProps {
   webinarId: string | undefined;
@@ -103,25 +105,28 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
         </p>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="identity" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="identity" className="text-xs">
-              <Bot className="w-3 h-3 mr-1" />
-              Identity
-            </TabsTrigger>
-            <TabsTrigger value="knowledge" className="text-xs">
-              <Brain className="w-3 h-3 mr-1" />
-              Knowledge
-            </TabsTrigger>
-            <TabsTrigger value="faqs" className="text-xs">
-              <MessageCircleQuestion className="w-3 h-3 mr-1" />
-              FAQs
-            </TabsTrigger>
-            <TabsTrigger value="behavior" className="text-xs">
-              <Settings2 className="w-3 h-3 mr-1" />
-              Behavior
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Configuration Tabs */}
+          <div>
+            <Tabs defaultValue="identity" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="identity" className="text-xs">
+                  <Bot className="w-3 h-3 mr-1" />
+                  Identity
+                </TabsTrigger>
+                <TabsTrigger value="knowledge" className="text-xs">
+                  <Brain className="w-3 h-3 mr-1" />
+                  Knowledge
+                </TabsTrigger>
+                <TabsTrigger value="faqs" className="text-xs">
+                  <MessageCircleQuestion className="w-3 h-3 mr-1" />
+                  FAQs
+                </TabsTrigger>
+                <TabsTrigger value="behavior" className="text-xs">
+                  <Settings2 className="w-3 h-3 mr-1" />
+                  Behavior
+                </TabsTrigger>
+              </TabsList>
 
           {/* Identity Tab */}
           <TabsContent value="identity" className="space-y-4">
@@ -420,7 +425,18 @@ export function ChatbotConfigPanel({ webinarId }: ChatbotConfigPanelProps) {
               />
             </div>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+          </div>
+
+          {/* Right: Test Chat Panel */}
+          <div>
+            <TestChatPanel 
+              webinarId={webinarId} 
+              botName={localConfig.bot_name}
+              botAvatar={localConfig.bot_avatar}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
