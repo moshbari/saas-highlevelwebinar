@@ -1,3 +1,4 @@
+import { RefObject } from 'react';
 import { WebinarConfig, TIMEZONES } from '@/types/webinar';
 import { VideoMode, VideoSequenceItem } from '@/types/clip';
 import { Input } from '@/components/ui/input';
@@ -23,14 +24,16 @@ import {
 import { RegistrationFormSettings } from './RegistrationFormSettings';
 import { RegistrationFormPreview } from './RegistrationFormPreview';
 import { VideoSequenceBuilder } from './VideoSequenceBuilder';
-import { ChatbotConfigPanel } from './ChatbotConfigPanel';
+import { ChatbotConfigPanel, ChatbotConfigRef } from './ChatbotConfigPanel';
+
 interface WebinarFormProps {
   config: Omit<WebinarConfig, 'id' | 'createdAt' | 'updatedAt'>;
   onChange: (config: Omit<WebinarConfig, 'id' | 'createdAt' | 'updatedAt'>) => void;
   webinarId?: string; // Optional webinar ID for existing webinars
+  chatbotConfigRef?: RefObject<ChatbotConfigRef>; // Ref for getting chatbot config from parent
 }
 
-export function WebinarForm({ config, onChange, webinarId }: WebinarFormProps) {
+export function WebinarForm({ config, onChange, webinarId, chatbotConfigRef }: WebinarFormProps) {
   const updateField = <K extends keyof typeof config>(field: K, value: typeof config[K]) => {
     onChange({ ...config, [field]: value });
   };
@@ -798,7 +801,7 @@ export function WebinarForm({ config, onChange, webinarId }: WebinarFormProps) {
       )}
 
       {/* AI Chatbot Configuration */}
-      <ChatbotConfigPanel webinarId={webinarId} />
+      <ChatbotConfigPanel webinarId={webinarId} ref={chatbotConfigRef} />
     </div>
   );
 }
