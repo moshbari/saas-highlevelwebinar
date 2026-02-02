@@ -394,18 +394,9 @@ export function WebinarForm({ config, onChange, webinarId }: WebinarFormProps) {
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="webhookUrl">Webhook URL</Label>
-            <Input
-              id="webhookUrl"
-              type="url"
-              value={config.webhookUrl}
-              onChange={(e) => updateField('webhookUrl', e.target.value)}
-              placeholder="https://your-n8n.com/webhook/chatbot"
-              className="input-field"
-            />
-            <p className="text-xs text-muted-foreground">N8N or other webhook URL for AI responses</p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Configure AI chatbot behavior, knowledge base, and FAQs in the "AI Chatbot Configuration" section below.
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="typingDelayMin">Typing Delay Min (seconds)</Label>
