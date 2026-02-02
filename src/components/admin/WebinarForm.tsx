@@ -365,77 +365,7 @@ export function WebinarForm({ config, onChange, webinarId, chatbotConfigRef }: W
         </CardContent>
       </Card>
 
-      {/* Chatbot Settings */}
-      <Card className="glass-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg font-display">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Chatbot Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="botName">Bot Name</Label>
-              <Input
-                id="botName"
-                value={config.botName}
-                onChange={(e) => updateField('botName', e.target.value)}
-                placeholder="e.g., Support Team"
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="botAvatar">Bot Avatar Text</Label>
-              <Input
-                id="botAvatar"
-                value={config.botAvatar}
-                onChange={(e) => updateField('botAvatar', e.target.value.slice(0, 2))}
-                placeholder="e.g., AI"
-                className="input-field w-24"
-                maxLength={2}
-              />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Configure AI chatbot behavior, knowledge base, and FAQs in the "AI Chatbot Configuration" section below.
-          </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="typingDelayMin">Typing Delay Min (seconds)</Label>
-              <Input
-                id="typingDelayMin"
-                type="number"
-                value={config.typingDelayMin}
-                onChange={(e) => updateField('typingDelayMin', parseInt(e.target.value) || 2)}
-                className="input-field"
-                min={1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="typingDelayMax">Typing Delay Max (seconds)</Label>
-              <Input
-                id="typingDelayMax"
-                type="number"
-                value={config.typingDelayMax}
-                onChange={(e) => updateField('typingDelayMax', parseInt(e.target.value) || 5)}
-                className="input-field"
-                min={1}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="errorMessage">Error Message</Label>
-            <Textarea
-              id="errorMessage"
-              value={config.errorMessage}
-              onChange={(e) => updateField('errorMessage', e.target.value)}
-              placeholder="Message shown when AI fails to respond"
-              className="input-field min-h-[80px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Chatbot Settings card removed - all settings consolidated in AI Chatbot Configuration panel */}
 
       {/* CTA Settings */}
       <Card className="glass-card">
@@ -801,7 +731,16 @@ export function WebinarForm({ config, onChange, webinarId, chatbotConfigRef }: W
       )}
 
       {/* AI Chatbot Configuration */}
-      <ChatbotConfigPanel webinarId={webinarId} ref={chatbotConfigRef} />
+      <ChatbotConfigPanel 
+        webinarId={webinarId} 
+        ref={chatbotConfigRef}
+        typingDelayMin={config.typingDelayMin}
+        typingDelayMax={config.typingDelayMax}
+        errorMessage={config.errorMessage}
+        onTypingDelayMinChange={(v) => updateField('typingDelayMin', v)}
+        onTypingDelayMaxChange={(v) => updateField('typingDelayMax', v)}
+        onErrorMessageChange={(v) => updateField('errorMessage', v)}
+      />
     </div>
   );
 }
