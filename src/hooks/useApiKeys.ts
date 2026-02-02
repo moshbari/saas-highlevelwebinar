@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from './useAuth';
 
 export interface ApiKeyStatus {
   openai_configured: boolean;
@@ -15,35 +16,47 @@ export interface ApiKeyStatus {
 
 export function useApiKeys() {
   const queryClient = useQueryClient();
+  const { user, profile } = useAuth();
   const [isTestingKey, setIsTestingKey] = useState<string | null>(null);
+  
+  // Get tenant ID from profile
+  const tenantId = profile?.default_tenant_id;
 
-  // Fetch current API key status
+  // Fetch current API key status - only when user and tenantId are available
   const { data: status, isLoading, error } = useQuery({
-    queryKey: ['api-keys-status'],
+    queryKey: ['api-keys-status', tenantId],
     queryFn: async (): Promise<ApiKeyStatus> => {
+      if (!tenantId) {
+        throw new Error('No tenant ID available');
+      }
+      
       const { data, error } = await supabase.functions.invoke('manage-api-key', {
-        body: { action: 'get-status' }
+        body: { action: 'get-status', tenantId }
       });
 
       if (error) throw error;
       
       return {
-        openai_configured: data.openai_configured || false,
-        openai_configured_at: data.openai_configured_at || null,
-        anthropic_configured: data.anthropic_configured || false,
-        anthropic_configured_at: data.anthropic_configured_at || null,
-        whisper_configured: data.whisper_configured || false,
-        whisper_configured_at: data.whisper_configured_at || null,
-        preferred_provider: data.preferred_provider || 'openai',
+        openai_configured: data.openai?.configured || false,
+        openai_configured_at: data.openai?.configuredAt || null,
+        anthropic_configured: data.anthropic?.configured || false,
+        anthropic_configured_at: data.anthropic?.configuredAt || null,
+        whisper_configured: data.whisper?.configured || false,
+        whisper_configured_at: data.whisper?.configuredAt || null,
+        preferred_provider: data.preferredProvider || 'openai',
       };
     },
+    enabled: !!user && !!tenantId, // Only run when authenticated with tenant
+    retry: false, // Don't retry on failure to prevent loops
   });
 
   // Save API key mutation
   const saveKeyMutation = useMutation({
     mutationFn: async ({ keyType, apiKey }: { keyType: 'openai' | 'anthropic' | 'whisper'; apiKey: string }) => {
+      if (!tenantId) throw new Error('No tenant ID available');
+      
       const { data, error } = await supabase.functions.invoke('manage-api-key', {
-        body: { action: 'save-key', key_type: keyType, api_key: apiKey }
+        body: { action: 'save-key', tenantId, key_type: keyType, api_key: apiKey }
       });
 
       if (error) throw error;
@@ -54,7 +67,7 @@ export function useApiKeys() {
     onSuccess: (_, variables) => {
       const keyNames = { openai: 'OpenAI', anthropic: 'Anthropic', whisper: 'Whisper' };
       toast.success(`${keyNames[variables.keyType]} API key saved successfully`);
-      queryClient.invalidateQueries({ queryKey: ['api-keys-status'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys-status', tenantId] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to save API key');
@@ -64,8 +77,10 @@ export function useApiKeys() {
   // Remove API key mutation
   const removeKeyMutation = useMutation({
     mutationFn: async (keyType: 'openai' | 'anthropic' | 'whisper') => {
+      if (!tenantId) throw new Error('No tenant ID available');
+      
       const { data, error } = await supabase.functions.invoke('manage-api-key', {
-        body: { action: 'remove-key', key_type: keyType }
+        body: { action: 'remove-key', tenantId, key_type: keyType }
       });
 
       if (error) throw error;
@@ -76,7 +91,7 @@ export function useApiKeys() {
     onSuccess: (_, keyType) => {
       const keyNames = { openai: 'OpenAI', anthropic: 'Anthropic', whisper: 'Whisper' };
       toast.success(`${keyNames[keyType]} API key removed`);
-      queryClient.invalidateQueries({ queryKey: ['api-keys-status'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys-status', tenantId] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to remove API key');
@@ -86,8 +101,10 @@ export function useApiKeys() {
   // Set preferred provider mutation
   const setProviderMutation = useMutation({
     mutationFn: async (provider: 'openai' | 'anthropic') => {
+      if (!tenantId) throw new Error('No tenant ID available');
+      
       const { data, error } = await supabase.functions.invoke('manage-api-key', {
-        body: { action: 'set-provider', provider }
+        body: { action: 'set-provider', tenantId, provider }
       });
 
       if (error) throw error;
@@ -98,7 +115,7 @@ export function useApiKeys() {
     onSuccess: (_, provider) => {
       const providerNames = { openai: 'OpenAI', anthropic: 'Anthropic' };
       toast.success(`${providerNames[provider]} set as preferred AI provider`);
-      queryClient.invalidateQueries({ queryKey: ['api-keys-status'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys-status', tenantId] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to set provider');
@@ -107,10 +124,15 @@ export function useApiKeys() {
 
   // Test API key
   const testKey = async (keyType: 'openai' | 'anthropic') => {
+    if (!tenantId) {
+      toast.error('No tenant available');
+      return false;
+    }
+    
     setIsTestingKey(keyType);
     try {
       const { data, error } = await supabase.functions.invoke('manage-api-key', {
-        body: { action: 'test-key', key_type: keyType }
+        body: { action: 'test-key', tenantId, key_type: keyType }
       });
 
       if (error) throw error;
@@ -142,5 +164,6 @@ export function useApiKeys() {
     isSettingProvider: setProviderMutation.isPending,
     testKey,
     isTestingKey,
+    tenantId, // Expose for debugging
   };
 }
