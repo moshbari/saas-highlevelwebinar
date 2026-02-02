@@ -9,6 +9,7 @@ export interface UserProfile {
   phone: string | null;
   status: UserStatus;
   trial_ends_at: string | null;
+  default_tenant_id: string | null;
   created_at: string;
   updated_at: string;
 }
