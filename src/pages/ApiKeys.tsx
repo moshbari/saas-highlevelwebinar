@@ -112,6 +112,9 @@ export default function ApiKeys() {
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
               Preferred AI Provider
+              {isSettingProvider && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
             </CardTitle>
             <CardDescription>
               Choose which AI provider to use for chatbot responses
@@ -121,18 +124,19 @@ export default function ApiKeys() {
             <RadioGroup
               value={status?.preferred_provider || 'openai'}
               onValueChange={(value) => setProvider(value as 'openai' | 'anthropic')}
-              disabled={isSettingProvider}
               className="grid grid-cols-2 gap-4"
             >
               <Label
                 htmlFor="openai"
-                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  isSettingProvider ? 'opacity-60 pointer-events-none' : ''
+                } ${
                   status?.preferred_provider === 'openai' 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}
               >
-                <RadioGroupItem value="openai" id="openai" />
+                <RadioGroupItem value="openai" id="openai" disabled={isSettingProvider} />
                 <div className="flex-1">
                   <p className="font-medium">OpenAI</p>
                   <p className="text-sm text-muted-foreground">GPT-4o-mini</p>
@@ -145,13 +149,15 @@ export default function ApiKeys() {
               </Label>
               <Label
                 htmlFor="anthropic"
-                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  isSettingProvider ? 'opacity-60 pointer-events-none' : ''
+                } ${
                   status?.preferred_provider === 'anthropic' 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
                 }`}
               >
-                <RadioGroupItem value="anthropic" id="anthropic" />
+                <RadioGroupItem value="anthropic" id="anthropic" disabled={isSettingProvider} />
                 <div className="flex-1">
                   <p className="font-medium">Anthropic</p>
                   <p className="text-sm text-muted-foreground">Claude 3 Haiku</p>
