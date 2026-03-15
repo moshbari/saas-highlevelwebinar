@@ -11,7 +11,7 @@ export const useWebinarNotes = (webinarId: string) => {
   const [initialContent, setInitialContent] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isLoading, setIsLoading] = useState(true);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedContentRef = useRef('');
 
   // Fetch existing notes
